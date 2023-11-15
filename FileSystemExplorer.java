@@ -18,10 +18,10 @@ public class FileSystemExplorer extends JPanel {
   @Override
   public void paintComponent(Graphics page) {
     super.paintComponent(page);
-    drawBoard(page);
+    drawWindow(page);
   }
 
-  public void drawBoard(Graphics page) {
+  public void drawWindow(Graphics page) {
     setBackground(white);
     page.setColor(gray);
     page.fillRect(0, 0, 900, 70);
@@ -31,8 +31,8 @@ public class FileSystemExplorer extends JPanel {
   public static void main(String[] args) {
     JFrame frame = new JFrame("File System Explorer");
     frame.getContentPane();
-    FileSystemExplorer gamePanel = new FileSystemExplorer();
-    frame.add(gamePanel);
+    FileSystemExplorer FSE = new FileSystemExplorer();
+    frame.add(FSE);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.setResizable(false);
     frame.pack();
