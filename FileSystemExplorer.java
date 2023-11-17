@@ -81,7 +81,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
   @Override
   public void actionPerformed(ActionEvent e) {
     if (e.getActionCommand().equals("New File")) {
-      String fileName = JOptionPane.showInputDialog(frame, "What would you like you name the file?", null);
+      String fileName = JOptionPane.showInputDialog(frame, "Enter a file name:", null);
       FSObject temp;
       if (fileName != null && fileName.isEmpty()) fileName = "temp";
       if (fileName != null) {
