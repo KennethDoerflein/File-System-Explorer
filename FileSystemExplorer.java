@@ -222,6 +222,16 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
 
     @Override
     public void mouseClicked(MouseEvent e) {
+      // not used, don't remove
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+      // not used, don't remove
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
       int xCord = e.getX();
       int yCord = e.getY();
       for (int i = 0; i < FSObjects.size(); i++) {
@@ -255,16 +265,6 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
       renameButton.setVisible(false);
       deleteButton.setVisible(false);
       System.out.println("X Cord: " + xCord + ", Y Cord: " + yCord);
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-      // not used, don't remove
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-      // not used, don't remove
     }
 
     @Override
