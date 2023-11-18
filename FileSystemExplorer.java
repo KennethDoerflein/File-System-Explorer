@@ -178,6 +178,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
   }
 
   private static class fileListener implements MouseListener {
+    private int clickCount = -1;
     @Override
     public void mouseClicked(MouseEvent e) {
       int xCord = e.getX();
@@ -194,12 +195,19 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
         int yMin = 100 + ((imageHeight + 40) * (int) (i / 9.0));
         int yMax = 150 + ((imageHeight + 40) * (int) (i / 9.0));
         if (xCord >= xMin && xCord <= xMax && yCord >= yMin && yCord <= yMax) {
+          if (fileSelected == i) clickCount++;
+          if (clickCount % 2 == 0) {
+            clickCount = -2;
+            System.out.println("Double Click Detected");
+          }
+
           fileSelected = i;
           System.out.println("File " + fileSelected);
           return;
         }
       }
       fileSelected = -1;
+      clickCount = -1;
       System.out.println("X Cord: " + xCord + ", Y Cord: " + yCord);
     }
 
