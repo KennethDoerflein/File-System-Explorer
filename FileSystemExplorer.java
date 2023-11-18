@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class FileSystemExplorer extends JPanel implements ActionListener {
   Color white = new Color(220, 220, 220);
@@ -14,8 +15,10 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
   static JButton newFolderButton;
   static JButton renameButton;
   static JButton deleteButton;
+  static JButton changeDirButton;
   static JFrame frame;
   static ArrayList<FSObject> FSObjects;
+  static ArrayList<FSObject> currentDirObjects;
   static ArrayList<String> usedNames;
   static String currentDirectory = "home";
   final static int toolBarHeight = 70;
@@ -55,6 +58,13 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
     deleteButton.setVisible(true);
     add(deleteButton);
     deleteButton.setLocation(3 * (deleteButton.getWidth() + 12), 20);
+
+    changeDirButton = new JButton("Change Dir");
+    changeDirButton.addActionListener(this);
+    changeDirButton.setBounds(buttonBounds);
+    changeDirButton.setVisible(true);
+    add(changeDirButton);
+    changeDirButton.setLocation(4 * (changeDirButton.getWidth() + 11), 20);
   }
 
   @Override
@@ -75,8 +85,14 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
     // SET FONT
     Font font = new Font("Helvetica", Font.BOLD, 12);
     page.setFont(font);
-    for (int i = 0; i < FSObjects.size(); i++) {
-      FSObject tempObject = FSObjects.get(i);
+    currentDirObjects = new ArrayList<>();
+    for (FSObject cObject : FSObjects) {
+      if (Objects.equals(cObject.getParentDirectory(), currentDirectory)) {
+        currentDirObjects.add(cObject);
+      }
+    }
+    for (int i = 0; i < currentDirObjects.size(); i++) {
+      FSObject tempObject = currentDirObjects.get(i);
 
       ImageIcon imageIcon = tempObject.getImageIcon();
       int imageWidth = imageIcon.getIconWidth();
@@ -118,12 +134,14 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
       if (fileName != null && fileName.isEmpty()) fileName = "tmp";
 
       if (fileName != null) {
+        updateUsedNames();
         if (checkNameUsed(fileName)) fileName = updateName(fileName);
         temp = new FSObject(fileName, "file", currentDirectory);
         FSObjects.add(temp);
-        usedNames.add(fileName);
+        //usedNames.add(fileName);
       }
     } else if (e.getActionCommand().equals("New Folder")) {
+      updateUsedNames();
       String folderName = JOptionPane.showInputDialog(frame, "Enter a folder name:", null);
       FSObject temp;
       if (folderName != null && folderName.isEmpty()) folderName = "tmp";
@@ -132,34 +150,56 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
         if (checkNameUsed(folderName)) folderName = updateName(folderName);
         temp = new FSObject(folderName, "folder", currentDirectory);
         FSObjects.add(temp);
-        usedNames.add(folderName);
+        //usedNames.add(folderName);
       }
     } else if (e.getActionCommand().equals("Rename")) {
       if (fileSelected > -1) {
         String newName = JOptionPane.showInputDialog(frame, "Enter a new name:", null);
-        if (newName != null && !newName.isEmpty()) renameCurrentObjet(newName);
+        if (newName != null && !newName.isEmpty()) renameCurrentObject(newName);
       }
+      // change over to double-click for final version
     } else if (e.getActionCommand().equals("Delete")) {
       if (fileSelected > -1) {
-        int delete = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete " + FSObjects.get(fileSelected).getName() + "?");
+        int delete = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete " + currentDirObjects.get(fileSelected).getName() + "?");
         System.out.println(delete);
         if (delete == 0) deleteCurrentObjet();
       }
+    } else if (e.getActionCommand().equals("Change Dir")) {
+      if (currentDirectory.equals("home")) currentDirectory = "home1";
+      else currentDirectory = "home";
+      updateUsedNames();
+      fileSelected = -1;
+    }
+  }
+
+  private void updateUsedNames() {
+    usedNames.clear();
+    for (FSObject cObj : currentDirObjects) {
+      usedNames.add(cObj.getName());
     }
   }
 
   private void deleteCurrentObjet() {
-    usedNames.remove(FSObjects.get(fileSelected).getName());
-    FSObjects.remove(fileSelected);
+    usedNames.remove(currentDirObjects.get(fileSelected).getName());
+    FSObjects.remove(currentDirObjects.get(fileSelected));
+    currentDirObjects.remove(fileSelected);
     fileSelected = -1;
+    updateUsedNames();
+    System.out.println("currentDirObjects length: " + currentDirObjects.size());
+    System.out.println("FSObjects length: " + FSObjects.size());
+    System.out.println("usedNames length: " + usedNames.size());
   }
 
-  private void renameCurrentObjet(String newName) {
-    FSObject current = FSObjects.get(fileSelected);
+  private void renameCurrentObject(String newName) {
+    FSObject current = currentDirObjects.get(fileSelected);
     usedNames.remove(current.getName());
     if (checkNameUsed(newName)) newName = updateName(newName);
     current.setName(newName);
+    currentDirObjects.get(fileSelected).setName(newName);
+    int index = FSObjects.indexOf(currentDirObjects.get(fileSelected));
+    FSObjects.get(index).setName(newName);
     usedNames.add(newName);
+    updateUsedNames();
     fileSelected = -1;
   }
 
@@ -179,6 +219,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
 
   private static class fileListener implements MouseListener {
     private int clickCount = -1;
+
     @Override
     public void mouseClicked(MouseEvent e) {
       int xCord = e.getX();
