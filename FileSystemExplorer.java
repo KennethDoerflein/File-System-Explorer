@@ -109,7 +109,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
       else page.setColor(Color.black);
       page.drawString(formattedName, labelX, labelY);
       page.setColor(Color.black);
-      if (fileSelected >= 0) page.drawString("Selected: " + FSObjects.get(fileSelected).getName(), 20, 595);
+      if (fileSelected >= 0) page.drawString("Selected: " + currentDirObjects.get(fileSelected).getName(), 20, 595);
     }
     repaint();
   }
@@ -160,6 +160,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
       // change over to double-click for final version
     } else if (e.getActionCommand().equals("Delete")) {
       if (fileSelected > -1) {
+        updateUsedNames();
         int delete = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete " + currentDirObjects.get(fileSelected).getName() + "?");
         System.out.println(delete);
         if (delete == 0) deleteCurrentObjet();
@@ -185,9 +186,9 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
     currentDirObjects.remove(fileSelected);
     fileSelected = -1;
     updateUsedNames();
-    System.out.println("currentDirObjects length: " + currentDirObjects.size());
-    System.out.println("FSObjects length: " + FSObjects.size());
-    System.out.println("usedNames length: " + usedNames.size());
+    //System.out.println("currentDirObjects length: " + currentDirObjects.size());
+    //System.out.println("FSObjects length: " + FSObjects.size());
+    //System.out.println("usedNames length: " + usedNames.size());
   }
 
   private void renameCurrentObject(String newName) {
@@ -228,14 +229,10 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
     @Override
     public void mousePressed(MouseEvent e) {
       // not used, don't remove
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
       int xCord = e.getX();
       int yCord = e.getY();
-      for (int i = 0; i < FSObjects.size(); i++) {
-        ImageIcon imageIcon = FSObjects.get(i).getImageIcon();
+      for (int i = 0; i < currentDirObjects.size(); i++) {
+        ImageIcon imageIcon = currentDirObjects.get(i).getImageIcon();
         int imageWidth = imageIcon.getIconWidth();
         int imageHeight = imageIcon.getIconWidth() + 12;
         int iAdj = i;
@@ -265,6 +262,11 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
       renameButton.setVisible(false);
       deleteButton.setVisible(false);
       System.out.println("X Cord: " + xCord + ", Y Cord: " + yCord);
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+      // not used, don't remove
     }
 
     @Override
