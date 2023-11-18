@@ -9,8 +9,11 @@ import java.util.ArrayList;
 public class FileSystemExplorer extends JPanel implements ActionListener {
   Color white = new Color(220, 220, 220);
   Color gray = new Color(54, 59, 65);
+  Color red = new Color(243, 15, 15);
   static JButton newFileButton;
   static JButton newFolderButton;
+  static JButton renameButton;
+  static JButton deleteButton;
   static JFrame frame;
   static ArrayList<FSObject> FSObjects;
   static ArrayList<String> usedNames;
@@ -38,6 +41,20 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
     newFolderButton.setVisible(true);
     add(newFolderButton);
     newFolderButton.setLocation(newFileButton.getWidth() + 20, 20);
+
+    renameButton = new JButton("Rename");
+    renameButton.addActionListener(this);
+    renameButton.setBounds(buttonBounds);
+    renameButton.setVisible(true);
+    add(renameButton);
+    renameButton.setLocation(2 * (newFolderButton.getWidth() + 14), 20);
+
+    deleteButton = new JButton("Delete");
+    deleteButton.addActionListener(this);
+    deleteButton.setBounds(buttonBounds);
+    deleteButton.setVisible(true);
+    add(deleteButton);
+    deleteButton.setLocation(3 * (deleteButton.getWidth() + 12), 20);
   }
 
   @Override
@@ -72,8 +89,10 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
       if (tempObject.getName().length() > 5) formattedName += "...";
       int labelX = rowSpacingX + imageWidth / formattedName.length();
       int labelY = rowSpacingY + imageWidth + 10;
+      if (i == fileSelected) page.setColor(red);
+      else page.setColor(Color.black);
       page.drawString(formattedName, labelX, labelY);
-
+      page.setColor(Color.black);
       if (fileSelected >= 0) page.drawString("File Selected: " + FSObjects.get(fileSelected).getName(), 20, 595);
     }
     repaint();
@@ -115,7 +134,33 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
         FSObjects.add(temp);
         usedNames.add(folderName);
       }
+    } else if (e.getActionCommand().equals("Rename")) {
+      if (fileSelected > -1) {
+        String newName = JOptionPane.showInputDialog(frame, "Enter a new name:", null);
+        if (newName != null && !newName.isEmpty()) renameCurrentObjet(newName);
+      }
+    } else if (e.getActionCommand().equals("Delete")) {
+      if (fileSelected > -1) {
+        int delete = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete " + FSObjects.get(fileSelected).getName() + "?");
+        System.out.println(delete);
+        if (delete == 0) deleteCurrentObjet();
+      }
     }
+  }
+
+  private void deleteCurrentObjet() {
+    usedNames.remove(FSObjects.get(fileSelected).getName());
+    FSObjects.remove(fileSelected);
+    fileSelected = -1;
+  }
+
+  private void renameCurrentObjet(String newName) {
+    FSObject current = FSObjects.get(fileSelected);
+    usedNames.remove(current.getName());
+    if (checkNameUsed(newName)) newName = updateName(newName);
+    current.setName(newName);
+    usedNames.add(newName);
+    fileSelected = -1;
   }
 
   private String updateName(String fileName) {
