@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 
 public class FileSystemExplorer extends JPanel implements ActionListener {
@@ -11,8 +13,10 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
   static JButton newFolderButton;
   static JFrame frame;
   static ArrayList<FSObject> FSObjects;
+  static ArrayList<String> usedNames;
   static String currentDirectory = "home";
   final static int toolBarHeight = 70;
+  static int fileSelected = -1;
 
   public FileSystemExplorer() {
     Dimension size = new Dimension(900, 600); // size of the panel
@@ -27,7 +31,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
     newFileButton.setVisible(true);
     add(newFileButton);
     newFileButton.setLocation(12, 20);
-
+    addMouseListener(new fileListener());
     newFolderButton = new JButton("New Folder");
     newFolderButton.addActionListener(this);
     newFolderButton.setBounds(buttonBounds);
@@ -47,6 +51,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
     setBackground(white);
     page.setColor(gray);
     page.fillRect(0, 0, 900, toolBarHeight);
+    page.drawLine(0, 580, 900, 580);
   }
 
   public void drawUI(Graphics page) {
@@ -55,28 +60,27 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
     page.setFont(font);
     for (int i = 0; i < FSObjects.size(); i++) {
       FSObject tempObject = FSObjects.get(i);
-      String imagePath = null;
 
-      if (tempObject.getType().equals("file")) imagePath = "./fileIcon.png";
-      else if (tempObject.getType().equals("folder")) imagePath = "./folderIcon.png";
-
-      ImageIcon image = new ImageIcon(imagePath);
-      int imageWidth = image.getIconWidth();
+      ImageIcon imageIcon = tempObject.getImageIcon();
+      int imageWidth = imageIcon.getIconWidth();
       int rowSpacingX = 40 + i * 2 * imageWidth;
-      if (rowSpacingX > 900) rowSpacingX -= 865 * (int) (i / 9.0);
+      if (rowSpacingX > 900) rowSpacingX -= 864 * (int) (i / 9.0);
       int rowSpacingY = 100 * (int) (i / 9.0) + toolBarHeight + imageWidth / 2;
-
-      page.drawImage(image.getImage(), rowSpacingX, rowSpacingY, null);
+      Image image = imageIcon.getImage();
+      page.drawImage(image, rowSpacingX, rowSpacingY, null);
       String formattedName = String.format("%3.5s", tempObject.getName());
       int labelX = rowSpacingX + imageWidth / formattedName.length();
       int labelY = rowSpacingY + imageWidth + 10;
       page.drawString(formattedName, labelX, labelY);
+
+      if (fileSelected >= 0) page.drawString("File Selected: " + FSObjects.get(fileSelected).getName(), 20, 595);
     }
     repaint();
   }
 
   public static void main(String[] args) {
     FSObjects = new ArrayList<>();
+    usedNames = new ArrayList<>();
     frame = new JFrame("File System Explorer");
     FileSystemExplorer FSE = new FileSystemExplorer();
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -91,19 +95,86 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
     if (e.getActionCommand().equals("New File")) {
       String fileName = JOptionPane.showInputDialog(frame, "Enter a file name:", null);
       FSObject temp;
-      if (fileName != null && fileName.isEmpty()) fileName = "temp";
+      if (fileName != null && fileName.isEmpty()) fileName = "tmp";
+
       if (fileName != null) {
+        if (checkNameUsed(fileName)) fileName = updateName(fileName);
         temp = new FSObject(fileName, "file", currentDirectory);
         FSObjects.add(temp);
+        usedNames.add(fileName);
       }
     } else if (e.getActionCommand().equals("New Folder")) {
       String folderName = JOptionPane.showInputDialog(frame, "Enter a folder name:", null);
       FSObject temp;
-      if (folderName != null && folderName.isEmpty()) folderName = "temp";
+      if (folderName != null && folderName.isEmpty()) folderName = "tmp";
+
       if (folderName != null) {
+        if (checkNameUsed(folderName)) folderName = updateName(folderName);
         temp = new FSObject(folderName, "folder", currentDirectory);
         FSObjects.add(temp);
+        usedNames.add(folderName);
       }
+    }
+  }
+
+  private String updateName(String fileName) {
+    String updatedName;
+    int counter = 1;
+    do {
+      updatedName = fileName + counter;
+      counter++;
+    } while (checkNameUsed(updatedName));
+    return updatedName;
+  }
+
+  private boolean checkNameUsed(String name) {
+    return usedNames.contains(name);
+  }
+
+  private static class fileListener implements MouseListener {
+    @Override
+    public void mouseClicked(MouseEvent e) {
+      int xCord = e.getX();
+      int yCord = e.getY();
+      for (int i = 0; i < FSObjects.size(); i++) {
+        ImageIcon imageIcon = FSObjects.get(i).getImageIcon();
+        int imageWidth = imageIcon.getIconWidth();
+        int imageHeight = imageIcon.getIconWidth() + 12;
+        int iAdj = i;
+        if (i >= 9) iAdj = i - 9 * (i / 9);
+        int xMin = 49 + iAdj * 2 * imageWidth;
+        int xMax = 80 + iAdj * 2 * imageWidth;
+
+        int yMin = 100 + ((imageHeight + 40) * (int) (i / 9.0));
+        int yMax = 150 + ((imageHeight + 40) * (int) (i / 9.0));
+        if (xCord >= xMin && xCord <= xMax && yCord >= yMin && yCord <= yMax) {
+          fileSelected = i;
+          System.out.println("File " + fileSelected);
+          return;
+        }
+      }
+      fileSelected = -1;
+      System.out.println("X Cord: " + xCord + ", Y Cord: " + yCord);
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+      // not used
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+      // not used
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+      // not used
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+      // not used
     }
   }
 
