@@ -69,6 +69,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
       Image image = imageIcon.getImage();
       page.drawImage(image, rowSpacingX, rowSpacingY, null);
       String formattedName = String.format("%3.5s", tempObject.getName());
+      if (tempObject.getName().length() > 5) formattedName += "...";
       int labelX = rowSpacingX + imageWidth / formattedName.length();
       int labelY = rowSpacingY + imageWidth + 10;
       page.drawString(formattedName, labelX, labelY);
