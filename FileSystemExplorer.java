@@ -109,7 +109,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
       else page.setColor(Color.black);
       page.drawString(formattedName, labelX, labelY);
       page.setColor(Color.black);
-      if (fileSelected >= 0) page.drawString("File Selected: " + FSObjects.get(fileSelected).getName(), 20, 595);
+      if (fileSelected >= 0) page.drawString("Selected: " + FSObjects.get(fileSelected).getName(), 20, 595);
     }
     repaint();
   }
