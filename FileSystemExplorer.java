@@ -48,14 +48,14 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
     renameButton = new JButton("Rename");
     renameButton.addActionListener(this);
     renameButton.setBounds(buttonBounds);
-    renameButton.setVisible(true);
+    renameButton.setVisible(false);
     add(renameButton);
     renameButton.setLocation(2 * (newFolderButton.getWidth() + 14), 20);
 
     deleteButton = new JButton("Delete");
     deleteButton.addActionListener(this);
     deleteButton.setBounds(buttonBounds);
-    deleteButton.setVisible(true);
+    deleteButton.setVisible(false);
     add(deleteButton);
     deleteButton.setLocation(3 * (deleteButton.getWidth() + 12), 20);
 
@@ -236,6 +236,9 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
         int yMin = 100 + ((imageHeight + 40) * (int) (i / 9.0));
         int yMax = 150 + ((imageHeight + 40) * (int) (i / 9.0));
         if (xCord >= xMin && xCord <= xMax && yCord >= yMin && yCord <= yMax) {
+          renameButton.setVisible(true);
+          deleteButton.setVisible(true);
+
           if (fileSelected == i) clickCount++;
           if (clickCount % 2 == 0) {
             clickCount = -2;
@@ -249,6 +252,8 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
       }
       fileSelected = -1;
       clickCount = -1;
+      renameButton.setVisible(false);
+      deleteButton.setVisible(false);
       System.out.println("X Cord: " + xCord + ", Y Cord: " + yCord);
     }
 
