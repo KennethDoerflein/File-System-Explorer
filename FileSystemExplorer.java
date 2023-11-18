@@ -11,6 +11,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
   static JButton newFolderButton;
   static JFrame frame;
   static ArrayList<FSObject> FSObjects;
+  static String currentDirectory = "home";
   final static int toolBarHeight = 70;
 
   public FileSystemExplorer() {
@@ -59,23 +60,24 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
       if (tempObject.getType().equals("file")) imagePath = "./fileIcon.png";
       else if (tempObject.getType().equals("folder")) imagePath = "./folderIcon.png";
 
-      ImageIcon temp = new ImageIcon(imagePath);
-      int rowSpacingX = 40 + i * 2 * temp.getIconWidth();
+      ImageIcon image = new ImageIcon(imagePath);
+      int imageWidth = image.getIconWidth();
+      int rowSpacingX = 40 + i * 2 * imageWidth;
       if (rowSpacingX > 900) rowSpacingX -= 865 * (int) (i / 9.0);
-      int rowSpacingY = 100 * (int) (i / 9.0) + toolBarHeight + temp.getIconHeight() / 2;
+      int rowSpacingY = 100 * (int) (i / 9.0) + toolBarHeight + imageWidth / 2;
 
-      page.drawImage(temp.getImage(), rowSpacingX, rowSpacingY, null);
-
-      int labelX = rowSpacingX + temp.getIconWidth() / 5;
-      int labelY = rowSpacingY + temp.getIconHeight() + 10;
-      page.drawString(tempObject.getName(), labelX, labelY);
+      page.drawImage(image.getImage(), rowSpacingX, rowSpacingY, null);
+      String formattedName = String.format("%3.5s", tempObject.getName());
+      int labelX = rowSpacingX + imageWidth / formattedName.length();
+      int labelY = rowSpacingY + imageWidth + 10;
+      page.drawString(formattedName, labelX, labelY);
     }
     repaint();
   }
 
   public static void main(String[] args) {
     FSObjects = new ArrayList<>();
-    frame = new JFrame("FEObject System Explorer");
+    frame = new JFrame("File System Explorer");
     FileSystemExplorer FSE = new FileSystemExplorer();
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.setResizable(false);
@@ -91,7 +93,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
       FSObject temp;
       if (fileName != null && fileName.isEmpty()) fileName = "temp";
       if (fileName != null) {
-        temp = new FSObject(fileName, "file");
+        temp = new FSObject(fileName, "file", currentDirectory);
         FSObjects.add(temp);
       }
     } else if (e.getActionCommand().equals("New Folder")) {
@@ -99,7 +101,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
       FSObject temp;
       if (folderName != null && folderName.isEmpty()) folderName = "temp";
       if (folderName != null) {
-        temp = new FSObject(folderName, "folder");
+        temp = new FSObject(folderName, "folder", currentDirectory);
         FSObjects.add(temp);
       }
     }

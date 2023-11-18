@@ -1,9 +1,12 @@
 public class FSObject {
   private String name;
   private String type;
-  public FSObject(String name, String type){
+  private String parentDirectory;
+
+  public FSObject(String name, String type, String parentDirectory) {
     this.name = name;
     this.type = type;
+    this.parentDirectory = parentDirectory;
   }
 
   public String getName() {
@@ -20,5 +23,13 @@ public class FSObject {
 
   public void setType(String type) {
     this.type = type;
+  }
+
+  public String getParentDirectory() {
+    return parentDirectory;
+  }
+
+  public void setParentDirectory(String parentDirectory) {
+    this.parentDirectory = parentDirectory;
   }
 }
