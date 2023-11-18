@@ -205,22 +205,22 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
 
     @Override
     public void mousePressed(MouseEvent e) {
-      // not used
+      // not used, don't remove
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-      // not used
+      // not used, don't remove
     }
 
     @Override
     public void mouseEntered(MouseEvent e) {
-      // not used
+      // not used, don't remove
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
-      // not used
+      // not used, don't remove
     }
   }
 
