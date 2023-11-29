@@ -173,7 +173,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
           updateUsedNames();
           int delete = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete " + currentDirObjects.get(fileSelected).getName() + "?");
           System.out.println(delete);
-          if (delete == 0) deleteCurrentObjet();
+          if (delete == 0) deleteCurrentObject();
         } else JOptionPane.showMessageDialog(frame, "Error, can't delete folders currently.\nWill break path and nesting.");
       }
     } else if (e.getActionCommand().equals("Go Back")) {
@@ -195,7 +195,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
     }
   }
 
-  private void deleteCurrentObjet() {
+  private void deleteCurrentObject() {
     usedNames.remove(currentDirObjects.get(fileSelected).getName());
     FSObjects.remove(currentDirObjects.get(fileSelected));
     currentDirObjects.remove(fileSelected);
