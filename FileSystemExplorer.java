@@ -243,7 +243,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
           //System.out.println(tmpOBJ.getFolderID());
           tmpOBJ.setFolderID(currentOBJ.getFolderID());
           //System.out.println(tmpOBJ.getFolderID());
-        } else if (tmpFID.contains(oldPath)) {
+        } else if (tmpFID.contains(oldPath) && !newName.equals(oldName)) {
           int offset = newName.length() - oldName.length();
           String builder = currentOBJFID + tmpParentDir.substring(currentOBJFID.length() - offset);
           //System.out.println(builder);
@@ -258,6 +258,12 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
     usedNames.add(newName);
     updateUsedNames();
     fileSelected = -1;
+    hideOBJManipulators();
+  }
+
+  private void hideOBJManipulators() {
+    renameButton.setVisible(false);
+    deleteButton.setVisible(false);
   }
 
   private String updateName(String fileName) {
