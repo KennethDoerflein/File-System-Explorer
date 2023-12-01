@@ -18,7 +18,7 @@ public class FSObject {
       imagePath = "./folderIcon.png";
     }
     imageIcon = new ImageIcon(imagePath);
-    folderID = this.name + this.parentDirectory;
+    folderID = this.parentDirectory + "/" + this.name;
   }
 
   public String getName() {
@@ -27,7 +27,7 @@ public class FSObject {
 
   public void setName(String name) {
     this.name = name;
-    this.folderID = this.name + this.parentDirectory;
+    this.folderID = this.parentDirectory + "/" + this.name;
   }
 
   public String getType() {
@@ -56,5 +56,9 @@ public class FSObject {
 
   public String getFolderID() {
     return folderID;
+  }
+
+  public void setFolderID(String folderID) {
+    this.folderID = folderID + "/" + this.name;
   }
 }

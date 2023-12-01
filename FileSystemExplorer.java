@@ -134,37 +134,42 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
   @Override
   public void actionPerformed(ActionEvent e) {
     if (e.getActionCommand().equals("New File")) {
-      String fileName = JOptionPane.showInputDialog(frame, "Enter a file name:", null);
-      FSObject temp;
-      if (fileName != null && fileName.isEmpty()) fileName = "tmp";
+      if (currentDirObjects.size() < 45) {
+        String fileName = JOptionPane.showInputDialog(frame, "Enter a file name:", null);
+        FSObject temp;
+        if (fileName != null && fileName.isEmpty()) fileName = "tmp";
 
-      if (fileName != null) {
-        updateUsedNames();
-        if (checkNameUsed(fileName)) fileName = updateName(fileName);
-        temp = new FSObject(fileName, "file", currentDirectory);
-        FSObjects.add(temp);
-        fileSelected = -1;
-        //usedNames.add(fileName);
+        if (fileName != null) {
+          updateUsedNames();
+          if (checkNameUsed(fileName)) fileName = updateName(fileName);
+          temp = new FSObject(fileName, "file", currentDirectory);
+          System.out.println(currentDirectory);
+          FSObjects.add(temp);
+          fileSelected = -1;
+        }
+      } else if (currentDirObjects.size() == 45) {
+        JOptionPane.showMessageDialog(frame, "Error: Maximum number of objects per directory has been reached.");
       }
     } else if (e.getActionCommand().equals("New Folder")) {
-      updateUsedNames();
-      String folderName = JOptionPane.showInputDialog(frame, "Enter a folder name:", null);
-      FSObject temp;
-      if (folderName != null && folderName.isEmpty()) folderName = "tmp";
+      if (currentDirObjects.size() < 45) {
+        updateUsedNames();
+        String folderName = JOptionPane.showInputDialog(frame, "Enter a folder name:", null);
+        FSObject temp;
+        if (folderName != null && folderName.isEmpty()) folderName = "tmp";
 
-      if (folderName != null) {
-        if (checkNameUsed(folderName)) folderName = updateName(folderName);
-        temp = new FSObject(folderName, "folder", currentDirectory);
-        FSObjects.add(temp);
-        fileSelected = -1;
-        //usedNames.add(folderName);
+        if (folderName != null) {
+          if (checkNameUsed(folderName)) folderName = updateName(folderName);
+          temp = new FSObject(folderName, "folder", currentDirectory);
+          FSObjects.add(temp);
+          fileSelected = -1;
+        }
+      } else if (currentDirObjects.size() == 45) {
+        JOptionPane.showMessageDialog(frame, "Error: Maximum number of objects per directory has been reached.");
       }
     } else if (e.getActionCommand().equals("Rename")) {
       if (fileSelected > -1) {
-        if (!currentDirObjects.get(fileSelected).getType().equals("folder")) {
-          String newName = JOptionPane.showInputDialog(frame, "Enter a new name:", null);
-          if (newName != null && !newName.isEmpty()) renameCurrentObject(newName);
-        } else JOptionPane.showMessageDialog(frame, "Error, can't rename folders currently.\nWill break path and nesting.");
+        String newName = JOptionPane.showInputDialog(frame, "Enter a new name:", null);
+        if (newName != null && !newName.isEmpty()) renameCurrentObject(newName);
       }
       // change over to double-click for final version
     } else if (e.getActionCommand().equals("Delete")) {
@@ -196,21 +201,57 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
   }
 
   private void deleteCurrentObject() {
-    usedNames.remove(currentDirObjects.get(fileSelected).getName());
-    FSObjects.remove(currentDirObjects.get(fileSelected));
-    currentDirObjects.remove(fileSelected);
-    fileSelected = -1;
-    updateUsedNames();
-    System.out.println("currentDirObjects length: " + currentDirObjects.size());
-    System.out.println("FSObjects length: " + FSObjects.size());
-    System.out.println("usedNames length: " + usedNames.size());
+    FSObject currentOBJ = currentDirObjects.get(fileSelected);
+    if (currentOBJ.getType().equals("file")) {
+      usedNames.remove(currentOBJ.getName());
+      FSObjects.remove(currentOBJ);
+      currentDirObjects.remove(fileSelected);
+      fileSelected = -1;
+      updateUsedNames();
+      System.out.println("currentDirObjects length: " + currentDirObjects.size());
+      System.out.println("FSObjects length: " + FSObjects.size());
+      System.out.println("usedNames length: " + usedNames.size());
+    } else if (currentOBJ.getType().equals("folder")) {
+      String path = currentOBJ.getFolderID();
+    }
   }
 
   private void renameCurrentObject(String newName) {
-    FSObject current = currentDirObjects.get(fileSelected);
-    usedNames.remove(current.getName());
-    if (checkNameUsed(newName)) newName = updateName(newName);
-    current.setName(newName);
+    FSObject currentOBJ = currentDirObjects.get(fileSelected);
+    String oldName = currentOBJ.getName();
+    if (currentOBJ.getType().equals("file")) {
+      usedNames.remove(currentOBJ.getName());
+      if (checkNameUsed(newName)) newName = updateName(newName);
+      currentOBJ.setName(newName);
+    } else if (currentOBJ.getType().equals("folder")) {
+      String oldPath = currentOBJ.getFolderID();
+      //System.out.println(oldPath);
+      usedNames.remove(currentOBJ.getName());
+      if (checkNameUsed(newName)) newName = updateName(newName);
+      currentOBJ.setName(newName);
+      //System.out.println(currentOBJ.getFolderID());
+      String currentOBJFID = currentOBJ.getFolderID();
+      for (int i = 0; i < FSObjects.size(); i++) {
+        FSObject tmpOBJ = FSObjects.get(i);
+        String tmpFID = tmpOBJ.getFolderID();
+        String tmpParentDir = tmpOBJ.getParentDirectory();
+        if (oldPath.equals(tmpParentDir)) {
+          //System.out.println("\n\nPATH CHANGING");
+          //System.out.println(tmpOBJ.getParentDirectory());
+          tmpOBJ.setParentDirectory(currentOBJFID);
+          //System.out.println(tmpOBJ.getParentDirectory());
+          //System.out.println(tmpOBJ.getFolderID());
+          tmpOBJ.setFolderID(currentOBJ.getFolderID());
+          //System.out.println(tmpOBJ.getFolderID());
+        } else if (tmpFID.contains(oldPath)) {
+          int offset = newName.length() - oldName.length();
+          String builder = currentOBJFID + tmpParentDir.substring(currentOBJFID.length() - offset);
+          //System.out.println(builder);
+          tmpOBJ.setFolderID(builder);
+          tmpOBJ.setParentDirectory(builder);
+        }
+      }
+    }
     currentDirObjects.get(fileSelected).setName(newName);
     int index = FSObjects.indexOf(currentDirObjects.get(fileSelected));
     FSObjects.get(index).setName(newName);
@@ -272,6 +313,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
               renameButton.setVisible(false);
               deleteButton.setVisible(false);
               changeDirButton.setVisible(true);
+              clickCount = -1;
               dirty = true;
             }
           }
