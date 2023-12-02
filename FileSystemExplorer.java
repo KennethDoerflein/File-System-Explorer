@@ -204,7 +204,34 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
       usedNames.remove(currentOBJ.getName());
       FSObjects.remove(currentOBJ);
       currentDirObjects.remove(fileSelected);
+    } else if (currentOBJ.getType().equals("folder")) {
+      String path = currentOBJ.getFullPath();
+      //System.out.println(path);
+      usedNames.remove(currentOBJ.getName());
+      FSObjects.remove(currentOBJ);
+      currentDirObjects.remove(fileSelected);
+      for (int i = 0; i < FSObjects.size(); i++) {
+        FSObject tmpOBJ = FSObjects.get(i);
+        String tmpOBJPath = tmpOBJ.getFullPath();
+        //System.out.println(tmpOBJ.getFullPath() + "\n\n");
+        if (tmpOBJPath.contains(path)) {
+          if (!tmpOBJ.getParentDirectory().equals(currentDirectory)) {
+            usedNames.remove(tmpOBJ.getName());
+            FSObjects.remove(tmpOBJ);
+            currentDirObjects.remove(tmpOBJ);
+            i = 0;
+          }
+        }
+      }
     }
+    /*
+    System.out.println("currentDirObjects length: " + currentDirObjects.size());
+    System.out.println("FSObjects length: " + FSObjects.size());
+    System.out.println("usedNames length: " + usedNames.size());
+    */
+    fileSelected = -1;
+    updateUsedNames();
+    hideOBJManipulators();
   }
 
   private void renameCurrentObject(String newName) {
@@ -229,8 +256,9 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
         if (oldPath.equals(tmpParentDir) && !newName.equals(oldName)) {
           tmpOBJ.setParentDirectory(currentOBJFID);
           tmpOBJ.setFullPath(currentOBJ.getFullPath());
-        } else if (tmpOBJ.getParentDirectory().equals("~")) {
-          // DO NOT REMOVE THIS ELIF IT IS NEEDED
+        } else if (tmpOBJ.getParentDirectory().equals(currentDirectory)) {
+          // DO NOT REMOVE THE ABOVE ELIF IT IS NEEDED
+          // Will integrate better later
         } else if (tmpFID.contains(oldPath) && !newName.equals(oldName)) {
           //System.out.println(oldPath);
           int offset = newName.length() - oldName.length();
