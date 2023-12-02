@@ -1,7 +1,7 @@
 import javax.swing.*;
 
 public class FSObject {
-  private String folderID;
+  private String fullPath;
   private String name;
   private String type;
   private String parentDirectory;
@@ -18,7 +18,7 @@ public class FSObject {
       imagePath = "./folderIcon.png";
     }
     imageIcon = new ImageIcon(imagePath);
-    folderID = this.parentDirectory + "/" + this.name;
+    fullPath = this.parentDirectory + "/" + this.name;
   }
 
   public String getName() {
@@ -27,7 +27,7 @@ public class FSObject {
 
   public void setName(String name) {
     this.name = name;
-    this.folderID = this.parentDirectory + "/" + this.name;
+    this.fullPath = this.parentDirectory + "/" + this.name;
   }
 
   public String getType() {
@@ -54,11 +54,11 @@ public class FSObject {
     this.imageIcon = imageIcon;
   }
 
-  public String getFolderID() {
-    return folderID;
+  public String getFullPath() {
+    return fullPath;
   }
 
-  public void setFolderID(String folderID) {
-    this.folderID = folderID + "/" + this.name;
+  public void setFullPath(String fullPath) {
+    this.fullPath = fullPath + "/" + this.name;
   }
 }
