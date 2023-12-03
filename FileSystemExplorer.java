@@ -21,7 +21,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
   static ArrayList<FSObject> currentDirObjects;
   static ArrayList<String> usedNames;
   static ArrayList<String> directoryPath;
-  static String currentDirectory = "~";
+  static String currentDirectory = "~/FSE_DIR";
   final static int toolBarHeight = 70;
   static int fileSelected = -1;
   private int clickCount = -1;
@@ -160,6 +160,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
         if (folderName != null) {
           if (checkNameUsed(folderName)) folderName = updateName(folderName);
           temp = new FSObject(folderName, "folder", currentDirectory);
+          System.out.println(currentDirectory);
           FSObjects.add(temp);
           fileSelected = -1;
         }
@@ -180,11 +181,11 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
         if (delete == 0) deleteCurrentObject();
       }
     } else if (e.getActionCommand().equals("Go Back")) {
-      if (!currentDirectory.equals("~")) {
+      if (!currentDirectory.equals("~/FSE_DIR")) {
         directoryPath.remove(directoryPath.size() - 1);
         currentDirectory = directoryPath.get(directoryPath.size() - 1);
       }
-      if (currentDirectory.equals("~")) changeDirButton.setVisible(false);
+      if (currentDirectory.equals("~/FSE_DIR")) changeDirButton.setVisible(false);
       updateUsedNames();
       fileSelected = -1;
       clickCount = -1;
@@ -200,6 +201,7 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
 
   private void deleteCurrentObject() {
     FSObject currentOBJ = currentDirObjects.get(fileSelected);
+    currentOBJ.deleteFile();
     if (currentOBJ.getType().equals("file")) {
       usedNames.remove(currentOBJ.getName());
       FSObjects.remove(currentOBJ);
@@ -329,12 +331,18 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
           if (clickCount % 2 == 0) {
             clickCount = -2;
             //System.out.println("Double Click Detected");
-            if (fileSelected != -1 && currentDirObjects.get(fileSelected).getType().equals("folder")) {
-              directoryPath.add(currentDirObjects.get(fileSelected).getFullPath());
-              currentDirectory = directoryPath.get(directoryPath.size() - 1);
+            FSObject currentOBJ;
+            if (fileSelected != -1) {
+              currentOBJ = currentDirObjects.get(fileSelected);
+              if (currentOBJ.getType().equals("folder")) {
+                directoryPath.add(currentDirObjects.get(fileSelected).getFullPath());
+                currentDirectory = directoryPath.get(directoryPath.size() - 1);
+                changeDirButton.setVisible(true);
+              } else if (currentOBJ.getType().equals("file")) {
+                currentOBJ.editFile();
+              }
               updateUsedNames();
               hideOBJManipulators();
-              changeDirButton.setVisible(true);
               clickCount = -1;
               dirty = true;
             }
