@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -21,7 +22,8 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
   static ArrayList<FSObject> currentDirObjects;
   static ArrayList<String> usedNames;
   static ArrayList<String> directoryPath;
-  static String currentDirectory = "~/FSE_DIR";
+  static final String homeDirName = "FSE_DIR";
+  static String currentDirectory = "~/" + homeDirName;
   final static int toolBarHeight = 70;
   static int fileSelected = -1;
   private int clickCount = -1;
@@ -124,6 +126,9 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
     directoryPath.add(currentDirectory);
     frame = new JFrame("File System Explorer");
     FileSystemExplorer FSE = new FileSystemExplorer();
+    File homeDir = new File("./" + homeDirName);
+    homeDir.mkdir();
+    homeDir.deleteOnExit();
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.setResizable(false);
     frame.add(FSE);
@@ -181,11 +186,11 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
         if (delete == 0) deleteCurrentObject();
       }
     } else if (e.getActionCommand().equals("Go Back")) {
-      if (!currentDirectory.equals("~/FSE_DIR")) {
+      if (!currentDirectory.equals("~/" + homeDirName)) {
         directoryPath.remove(directoryPath.size() - 1);
         currentDirectory = directoryPath.get(directoryPath.size() - 1);
       }
-      if (currentDirectory.equals("~/FSE_DIR")) changeDirButton.setVisible(false);
+      if (currentDirectory.equals("~/" + homeDirName)) changeDirButton.setVisible(false);
       updateUsedNames();
       fileSelected = -1;
       clickCount = -1;
