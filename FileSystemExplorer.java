@@ -77,6 +77,11 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
     super.paintComponent(page);
     drawWindow(page);
     drawUI(page);
+    try {
+      Thread.sleep(20);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void drawWindow(Graphics page) {
