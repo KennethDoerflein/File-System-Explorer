@@ -79,6 +79,10 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
   public static void main(String[] args) {
     // this contains the initial setup
 
+    try {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    } catch(Exception ignored) {}
+
     // create arrays for holding objects used by the file explorer
     FSObjects = new ArrayList<>();
     usedNames = new ArrayList<>();
