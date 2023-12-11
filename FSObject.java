@@ -11,81 +11,94 @@ public class FSObject {
   private String imagePath;
   private ImageIcon imageIcon;
   private File file;
+  File homeDir = new File("./" + FileSystemExplorer.homeDirName);
 
   public FSObject(String name, String type, String parentDirectory) {
     this.name = name;
     this.type = type;
     this.parentDirectory = parentDirectory;
+    // create path
     this.fullPath = this.parentDirectory + "/" + this.name;
+    // change ~ to . for host file creation
     String filePath = this.fullPath.replace('~', '.');
     try {
       if (type.equals("file")) {
+        // set image and create file on host system
         imagePath = "./fileIcon.png";
-        System.out.println(filePath);
+        //System.out.println(filePath);
         file = new File(filePath);
         file.createNewFile();
-        file.deleteOnExit();
+        file.deleteOnExit(); // delete on exit
       } else if (type.equals("folder")) {
+        // set image and create directory on host system
         imagePath = "./folderIcon.png";
-        System.out.println(filePath);
+        //System.out.println(filePath);
         file = new File(filePath);
         file.mkdir();
-        file.deleteOnExit();
+        file.deleteOnExit(); // delete on exit
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    this.imageIcon = new ImageIcon(imagePath);
+    this.imageIcon = new ImageIcon(imagePath); // create image icon from image
   }
 
-  public String getName() {
+  public String getName() { // get object name
     return name;
   }
 
-  public void setName(String name) {
+  public void setName(String name) { // update object name
     this.name = name;
-    this.fullPath = this.parentDirectory + "/" + this.name;
+    this.fullPath = this.parentDirectory + "/" + this.name; // remake path
+    // remake host object with new name
     String filePath = this.fullPath.replace('~', '.');
     File NewFile = new File(filePath);
     NewFile.deleteOnExit();
     file.renameTo(NewFile);
+    file.deleteOnExit();
+    recursiveDeleteOnExit(homeDir); // set all objects to delta on exit
   }
 
   public String getType() {
-    return type;
+    return type; // return object type
   }
 
   public void setType(String type) {
-    this.type = type;
+    this.type = type; // set object type
   }
 
   public String getParentDirectory() {
-    return parentDirectory;
+    return parentDirectory; // get parent directory
   }
 
   public void setParentDirectory(String parentDirectory) {
-    this.parentDirectory = parentDirectory;
+    this.parentDirectory = parentDirectory; // set parent directory
   }
 
   public ImageIcon getImageIcon() {
-    return imageIcon;
+    return imageIcon; // get image icon
   }
 
   public void setImageIcon(ImageIcon imageIcon) {
-    this.imageIcon = imageIcon;
+    this.imageIcon = imageIcon; // set image icon
   }
 
   public String getFullPath() {
-    return fullPath;
+    return fullPath; // get full object path
+  }
+
+  public void setFullPath(String fullPath) {
+    this.fullPath = fullPath + "/" + this.name; // set objects path
   }
 
   public void deleteFile() {
+    // delete object, change method based on directory or file
     if (type.equals("file")) this.file.delete();
     else if (type.equals("folder")) recursiveDirectoryDelete(file);
-
   }
 
   public void editFile() {
+    // call the host system to open its default editor for that file type
     Desktop desktop = Desktop.getDesktop();
     if (type.equals("file")) {
       try {
@@ -96,6 +109,7 @@ public class FSObject {
     }
   }
 
+  // recursively delete all objects in deleted directory on host
   public void recursiveDirectoryDelete(File dir) {
     File[] allFiles = dir.listFiles();
     if (allFiles != null && dir.isDirectory()) {
@@ -106,7 +120,14 @@ public class FSObject {
     dir.delete();
   }
 
-  public void setFullPath(String fullPath) {
-    this.fullPath = fullPath + "/" + this.name;
+  // set all created files to delete when the program exits
+  public void recursiveDeleteOnExit(File dir) {
+    File[] allFiles = dir.listFiles();
+    if (allFiles != null && dir.isDirectory()) {
+      for (File currentDir : allFiles) {
+        recursiveDirectoryDelete(currentDir);
+      }
+    }
+    dir.deleteOnExit();
   }
 }
