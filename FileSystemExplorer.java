@@ -340,11 +340,10 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
             tmpOBJ.setParentDirectory(newTmpOBJPath);
           }
         }
+        tmpOBJ.setName(tmpOBJ.getName());
       }
     }
     // rename directory
-    int index = FSObjects.indexOf(oldCurrentOBJ);
-    FSObjects.get(index).setName(newName);
     usedNames.add(newName);
     //updateUsedNames();
     // unselect file

@@ -52,15 +52,10 @@ public class FSObject {
     this.fullPath = this.parentDirectory + "/" + this.name; // remake path
     // remake host object with new name
     String filePath = this.fullPath.replace('~', '.');
-    //System.out.println(filePath);
     File newFile = new File(filePath);
-    newFile.deleteOnExit();
-    //System.out.println(file.getName());
-    //System.out.println();
+    //System.out.println(filePath);
     file.renameTo(newFile);
     file = newFile;
-    file.deleteOnExit();
-    //System.out.println(file.getName());
     recursiveDeleteOnExit(homeDir); // set all objects to delete on exit
   }
 
