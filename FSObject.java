@@ -52,11 +52,16 @@ public class FSObject {
     this.fullPath = this.parentDirectory + "/" + this.name; // remake path
     // remake host object with new name
     String filePath = this.fullPath.replace('~', '.');
-    File NewFile = new File(filePath);
-    NewFile.deleteOnExit();
-    file.renameTo(NewFile);
+    //System.out.println(filePath);
+    File newFile = new File(filePath);
+    newFile.deleteOnExit();
+    //System.out.println(file.getName());
+    //System.out.println();
+    file.renameTo(newFile);
+    file = newFile;
     file.deleteOnExit();
-    recursiveDeleteOnExit(homeDir); // set all objects to delta on exit
+    //System.out.println(file.getName());
+    recursiveDeleteOnExit(homeDir); // set all objects to delete on exit
   }
 
   public String getType() {
@@ -121,13 +126,14 @@ public class FSObject {
   }
 
   // set all created files to delete when the program exits
-  public void recursiveDeleteOnExit(File dir) {
-    File[] allFiles = dir.listFiles();
-    if (allFiles != null && dir.isDirectory()) {
+  public void recursiveDeleteOnExit(File obj) {
+    File[] allFiles = obj.listFiles();
+    if (allFiles != null) {
       for (File currentDir : allFiles) {
-        recursiveDirectoryDelete(currentDir);
+        currentDir.deleteOnExit();
+        recursiveDeleteOnExit(currentDir);
       }
     }
-    dir.deleteOnExit();
+    obj.deleteOnExit();
   }
 }
