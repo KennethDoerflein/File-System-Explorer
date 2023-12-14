@@ -202,16 +202,17 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
         String fileName = JOptionPane.showInputDialog(frame, "Enter a file name:", null);
         FSObject temp; // object to store new file information in
         if (fileName != null && fileName.isEmpty()) fileName = "tmp"; // set to tmp if no name is provided
-
         if (fileName != null) {
-          //updateUsedNames();
-          // check if name is used in the current directory then update it to an unused one
-          if (checkNameUsed(fileName)) fileName = updateName(fileName);
-          // create file object then save it, unselect files
-          temp = new FSObject(fileName, "file", currentDirectory);
-          //System.out.println(currentDirectory);
-          FSObjects.add(temp);
-          fileSelected = -1;
+          if (fileName.lastIndexOf('.') == fileName.indexOf('.')) {
+            //updateUsedNames();
+            // check if name is used in the current directory then update it to an unused one
+            if (checkNameUsed(fileName)) fileName = updateName(fileName);
+            // create file object then save it, unselect files
+            temp = new FSObject(fileName, "file", currentDirectory);
+            //System.out.println(currentDirectory);
+            FSObjects.add(temp);
+            fileSelected = -1;
+          } else JOptionPane.showMessageDialog(frame, "Error: Multiple '.' detected in '" + fileName + "'\nOnly include one for the file extension.");
         }
       } else if (currentDirObjects.size() == 45) { // show message is over 45 objects
         JOptionPane.showMessageDialog(frame, "Error: Maximum number of objects per directory has been reached.");
@@ -366,13 +367,24 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
 
   private String updateName(String fileName) {
     // check if name is used and add a number to it until it isn't
-    String updatedName;
-    int counter = 1;
-    do {
-      updatedName = fileName + counter;
-      counter++;
-    } while (checkNameUsed(updatedName));
-    return updatedName;
+    String[] nameParts = fileName.split("\\.");
+    if (nameParts.length > 1) {
+      String updatedName;
+      int counter = 1;
+      do {
+        updatedName = nameParts[0] + counter + "." + nameParts[1];
+        counter++;
+      } while (checkNameUsed(updatedName));
+      return updatedName;
+    } else {
+      String updatedName;
+      int counter = 1;
+      do {
+        updatedName = fileName + counter;
+        counter++;
+      } while (checkNameUsed(updatedName));
+      return updatedName;
+    }
   }
 
   // check if name is used
