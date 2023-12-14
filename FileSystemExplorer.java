@@ -182,6 +182,13 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
       // if the file is selected draw the full name at the bottom of the screen
       if (fileSelected >= 0) page.drawString("Selected: " + currentDirObjects.get(fileSelected).getName(), 20, 595);
     }
+    // get metrics from the graphics
+    FontMetrics metrics = page.getFontMetrics(font);
+    String pathStr = "Path: " + directoryPath.get(directoryPath.size() - 1).toString();
+    // calculate the width of the text
+    int adv = metrics.stringWidth(pathStr);
+    int pathX = 900 - adv - 20;
+    page.drawString(pathStr, pathX, 595);
     repaint(); // repaint the screen
     updateUsedNames(); // update the used names
   }
