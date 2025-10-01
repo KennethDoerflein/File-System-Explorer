@@ -4,112 +4,76 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
 
 public class FileSystemExplorer extends JPanel implements ActionListener {
-  Color white = new Color(220, 220, 220);
-  Color gray = new Color(54, 59, 65);
-  Color red = new Color(243, 15, 15);
-  static JButton newFileButton;
-  static JButton newFolderButton;
-  static JButton renameButton;
-  static JButton deleteButton;
-  static JButton changeDirButton;
-  static JFrame frame;
-  static ArrayList<FSObject> FSObjects;
-  static ArrayList<FSObject> currentDirObjects;
-  static ArrayList<String> usedNames;
-  static ArrayList<String> directoryPath;
-  static final String homeDirName = "FSE_DIR";
-  static String currentDirectory = "~/" + homeDirName;
-  final static int toolBarHeight = 70;
-  static int fileSelected = -1;
-  private int clickCount = -1;
+  private final JButton renameButton;
+  private final JButton deleteButton;
+  private final JButton changeDirButton;
+  private final JFrame frame;
+  private final ArrayList<FSObject> fsObjects;
+  private ArrayList<FSObject> currentDirObjects;
+  private final ArrayList<String> usedNames;
+  private final ArrayList<String> directoryPath;
+  private static final String HOME_DIR_NAME = "FSE_DIR";
+  private String currentDirectory = "~/" + HOME_DIR_NAME;
+  private int fileSelected = -1;
+  private final FileService fileService;
 
+  public FileSystemExplorer(JFrame frame) {
+    this.frame = frame;
+    this.fileService = new FileService(HOME_DIR_NAME);
+    this.fsObjects = new ArrayList<>();
+    this.usedNames = new ArrayList<>();
+    this.directoryPath = new ArrayList<>();
+    this.directoryPath.add(currentDirectory);
 
-  public FileSystemExplorer() {
-    // set size restrictions
-    Dimension size = new Dimension(900, 600); // size of the panel
-    setPreferredSize(size);
-    setMaximumSize(size);
-    setMinimumSize(size);
+    // Set size restrictions
+    setPreferredSize(UIConstants.PANEL_SIZE);
+    setMaximumSize(UIConstants.PANEL_SIZE);
+    setMinimumSize(UIConstants.PANEL_SIZE);
     setLayout(null);
 
-    // create buttons
-    Rectangle buttonBounds = new Rectangle(300, 250, 100, 30);
-    newFileButton = new JButton("New File");
-    newFileButton.addActionListener(this);
-    newFileButton.setBounds(buttonBounds);
-    newFileButton.setVisible(true);
-    add(newFileButton);
-    newFileButton.setLocation(12, 20);
-    addMouseListener(new fileListener());
+    // Create buttons
+    JButton newFileButton = createButton("New File", UIConstants.NEW_FILE_BUTTON_X_AXIS);
+    JButton newFolderButton = createButton("New Folder", UIConstants.NEW_FOLDER_BUTTON_X_AXIS);
+    renameButton = createButton("Rename", UIConstants.RENAME_BUTTON_X_AXIS);
+    deleteButton = createButton("Delete", UIConstants.DELETE_BUTTON_X_AXIS);
+    changeDirButton = createButton("Go Back", UIConstants.GO_BACK_BUTTON_X_AXIS);
 
-    newFolderButton = new JButton("New Folder");
-    newFolderButton.addActionListener(this);
-    newFolderButton.setBounds(buttonBounds);
-    newFolderButton.setVisible(true);
-    add(newFolderButton);
-    newFolderButton.setLocation(newFileButton.getWidth() + 20, 20);
-
-    renameButton = new JButton("Rename");
-    renameButton.addActionListener(this);
-    renameButton.setBounds(buttonBounds);
     renameButton.setVisible(false);
-    add(renameButton);
-    renameButton.setLocation(2 * (newFolderButton.getWidth() + 14), 20);
-
-    deleteButton = new JButton("Delete");
-    deleteButton.addActionListener(this);
-    deleteButton.setBounds(buttonBounds);
     deleteButton.setVisible(false);
-    add(deleteButton);
-    deleteButton.setLocation(3 * (deleteButton.getWidth() + 12), 20);
-
-    changeDirButton = new JButton("Go Back");
-    changeDirButton.addActionListener(this);
-    changeDirButton.setBounds(buttonBounds);
     changeDirButton.setVisible(false);
-    add(changeDirButton);
-    changeDirButton.setLocation(900 - changeDirButton.getWidth() - 10, 20);
+
+    addMouseListener(new FileListener());
+  }
+
+  private JButton createButton(String text, int x) {
+    JButton button = new JButton(text);
+    button.addActionListener(this);
+    button.setBounds(x, UIConstants.BUTTON_Y_AXIS, UIConstants.BUTTON_SIZE.width, UIConstants.BUTTON_SIZE.height);
+    add(button);
+    return button;
   }
 
   public static void main(String[] args) {
-    // this contains the initial setup
-
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     } catch (Exception ignored) {
     }
 
-    // create arrays for holding objects used by the file explorer
-    FSObjects = new ArrayList<>();
-    usedNames = new ArrayList<>();
-    directoryPath = new ArrayList<>();
-    directoryPath.add(currentDirectory);
-    // create and name the frame(main screen element)
-    frame = new JFrame("File System Explorer");
-    // create new object of self
-    FileSystemExplorer FSE = new FileSystemExplorer();
-    // create file of home directory
-    File homeDir = new File("./" + homeDirName);
-    // create directory object on host system
-    homeDir.mkdir();
-    // delete directory when explorer is closed
-    homeDir.deleteOnExit();
-    // stop running when frame is closed
+    JFrame frame = new JFrame("File System Explorer");
+    FileSystemExplorer fse = new FileSystemExplorer(frame);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    // frame setup
     frame.setResizable(false);
-    frame.add(FSE);
+    frame.add(fse);
     frame.pack();
     frame.setVisible(true);
   }
 
-  private static void updateUsedNames() {
-    // rebuild used names array for current directory
+  private void updateUsedNames() {
     usedNames.clear();
     for (FSObject cObj : currentDirObjects) {
       usedNames.add(cObj.getName());
@@ -117,369 +81,351 @@ public class FileSystemExplorer extends JPanel implements ActionListener {
   }
 
   @Override
-  public void paintComponent(Graphics page) {
-    // override paint component
-    super.paintComponent(page);
-    // call drawWindow to draw the outer box
-    drawWindow(page);
-    // call drawUI to draw the interface
-    drawUI(page);
-    // small sleep to decrease CPU usage
-    try {
-      Thread.sleep(20);
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    drawWindow(g);
+    drawUI(g);
+  }
+
+  private void drawWindow(Graphics g) {
+    setBackground(UIConstants.COLOR_WHITE);
+    g.setColor(UIConstants.COLOR_GRAY);
+    g.fillRect(0, 0, UIConstants.PANEL_SIZE.width, UIConstants.TOOLBAR_HEIGHT);
+    g.drawLine(0, UIConstants.BOTTOM_BAR_Y_AXIS, UIConstants.PANEL_SIZE.width, UIConstants.BOTTOM_BAR_Y_AXIS);
+  }
+
+  private void drawUI(Graphics g) {
+    g.setFont(UIConstants.FONT_HELVETICA_BOLD_12);
+    updateCurrentDirObjects();
+    drawFiles(g);
+    drawPathString(g);
+    if (fileSelected >= 0 && fileSelected < currentDirObjects.size()) {
+      g.drawString("Selected: " + currentDirObjects.get(fileSelected).getName(), UIConstants.PATH_STRING_X_OFFSET,
+          UIConstants.BOTTOM_BAR_TEXT_Y_AXIS);
     }
+    updateUsedNames();
   }
 
-  public void drawWindow(Graphics page) {
-    // draw the explorer window (toolbar, background, bottom line)
-    setBackground(white);
-    page.setColor(gray);
-    page.fillRect(0, 0, 900, toolBarHeight);
-    page.drawLine(0, 580, 900, 580);
-  }
-
-  public void drawUI(Graphics page) {
-    // SET FONT
-    Font font = new Font("Helvetica", Font.BOLD, 12);
-    page.setFont(font);
-    // create array of objects in current directory
+  private void updateCurrentDirObjects() {
     currentDirObjects = new ArrayList<>();
-    for (FSObject cObject : FSObjects) {
+    for (FSObject cObject : fsObjects) {
       if (Objects.equals(cObject.getParentDirectory(), currentDirectory)) {
         currentDirObjects.add(cObject);
       }
     }
-    // draw the files
+  }
+
+  private void drawFiles(Graphics g) {
+    FontMetrics metrics = g.getFontMetrics(UIConstants.FONT_HELVETICA_BOLD_12);
     for (int i = 0; i < currentDirObjects.size(); i++) {
-      // get file icon from object
       FSObject tempObject = currentDirObjects.get(i);
       ImageIcon imageIcon = tempObject.getImageIcon();
-      // get icon width
       int imageWidth = imageIcon.getIconWidth();
-      // calculate spacing based on image width
-      int rowSpacingX = 40 + i * 2 * imageWidth;
-      if (rowSpacingX > 900) rowSpacingX -= 864 * (int) (i / 9.0);
-      int rowSpacingY = 100 * (int) (i / 9.0) + toolBarHeight + imageWidth / 2;
-      // get the image from the image icon
-      Image image = imageIcon.getImage();
-      // draw the image on the screen at the calculated place
-      page.drawImage(image, rowSpacingX, rowSpacingY, null);
-      // format the string name so it isn't too long
-      String formattedName = String.format("%3.5s", tempObject.getName());
-      // add dots to symbolize full name isn't displayed and to look at the bottom of the screen
-      if (tempObject.getName().length() > 5) formattedName += "...";
-      // calculate label/name coordinates
-      int labelX = rowSpacingX + imageWidth / formattedName.length();
-      int labelY = rowSpacingY + imageWidth + 10;
-      // check if the file is selected to make the text red
-      if (i == fileSelected) page.setColor(red);
-      else page.setColor(Color.black);
-      // draw the files name
-      page.drawString(formattedName, labelX, labelY);
-      page.setColor(Color.black);
-      // if the file is selected draw the full name at the bottom of the screen
-      if (fileSelected >= 0) page.drawString("Selected: " + currentDirObjects.get(fileSelected).getName(), 20, 595);
+
+      int row = i / UIConstants.MAX_ICONS_PER_ROW;
+      int col = i % UIConstants.MAX_ICONS_PER_ROW;
+
+      int rowSpacingX = UIConstants.FILE_ICON_START_X + col * UIConstants.FILE_ICON_SPACING_X * imageWidth;
+      int rowSpacingY = UIConstants.FILE_ICON_START_Y + row * UIConstants.FILE_ICON_SPACING_Y;
+
+      g.drawImage(imageIcon.getImage(), rowSpacingX, rowSpacingY, null);
+
+      String formattedName = formatName(tempObject.getName());
+      int labelWidth = metrics.stringWidth(formattedName);
+      int labelX = rowSpacingX + (imageWidth - labelWidth) / 2;
+      int labelY = rowSpacingY + imageWidth + UIConstants.FILE_LABEL_Y_OFFSET;
+
+      g.setColor(i == fileSelected ? UIConstants.COLOR_RED : UIConstants.COLOR_BLACK);
+      g.drawString(formattedName, labelX, labelY);
+      g.setColor(UIConstants.COLOR_BLACK);
     }
-    // get metrics from the graphics
-    FontMetrics metrics = page.getFontMetrics(font);
-    String pathStr = "Path: " + directoryPath.get(directoryPath.size() - 1).toString();
-    // calculate the width of the text
+  }
+
+  private String formatName(String name) {
+    if (name.length() > UIConstants.FILE_NAME_MAX_LENGTH) {
+      return name.substring(0, UIConstants.FILE_NAME_MAX_LENGTH) + "...";
+    }
+    return name;
+  }
+
+  private void drawPathString(Graphics g) {
+    FontMetrics metrics = g.getFontMetrics(UIConstants.FONT_HELVETICA_BOLD_12);
+    String pathStr = "Path: " + directoryPath.get(directoryPath.size() - 1);
     int adv = metrics.stringWidth(pathStr);
-    int pathX = 900 - adv - 20;
-    page.drawString(pathStr, pathX, 595);
-    repaint(); // repaint the screen
-    updateUsedNames(); // update the used names
+    int pathX = UIConstants.PANEL_SIZE.width - adv - UIConstants.PATH_STRING_X_OFFSET;
+    g.drawString(pathStr, pathX, UIConstants.BOTTOM_BAR_TEXT_Y_AXIS);
   }
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    // listens for button presses
-    if (e.getActionCommand().equals("New File")) { // check if they want to make a file
-      if (currentDirObjects.size() < 45) { // limit to one page of icons per directory to reduce complexity
-        // show input dialog to get filename/type
-        String fileName = JOptionPane.showInputDialog(frame, "Enter a file name:", null);
-        FSObject temp; // object to store new file information in
-        if (fileName != null && fileName.isEmpty()) fileName = "tmp"; // set to tmp if no name is provided
-        if (fileName != null) {
-          if (fileName.lastIndexOf('.') == fileName.indexOf('.')) {
-            //updateUsedNames();
-            // check if name is used in the current directory then update it to an unused one
-            if (checkNameUsed(fileName)) fileName = updateName(fileName);
-            // create file object then save it, unselect files
-            temp = new FSObject(fileName, "file", currentDirectory);
-            //System.out.println(currentDirectory);
-            FSObjects.add(temp);
-            fileSelected = -1;
-          } else JOptionPane.showMessageDialog(frame, "Error: Multiple '.' detected in '" + fileName + "'\nOnly include one for the file extension.");
-        }
-      } else if (currentDirObjects.size() == 45) { // show message is over 45 objects
-        JOptionPane.showMessageDialog(frame, "Error: Maximum number of objects per directory has been reached.");
-      }
-    } else if (e.getActionCommand().equals("New Folder")) { // same thing as new file but for folders(directories)
-      if (currentDirObjects.size() < 45) {
-        //updateUsedNames();
-        String folderName = JOptionPane.showInputDialog(frame, "Enter a folder name:", null);
-        FSObject temp;
-        if (folderName != null && folderName.isEmpty()) folderName = "tmp";
-
-        if (folderName != null) {
-          if (checkNameUsed(folderName)) folderName = updateName(folderName);
-          temp = new FSObject(folderName, "folder", currentDirectory);
-          //System.out.println(currentDirectory);
-          FSObjects.add(temp);
-          fileSelected = -1;
-          clickCount = -1;
-        }
-      } else if (currentDirObjects.size() == 45) {
-        JOptionPane.showMessageDialog(frame, "Error: Maximum number of objects per directory has been reached.");
-      }
-      // get new name then call method to update it
-    } else if (e.getActionCommand().equals("Rename")) {
-      if (fileSelected > -1) {
-        String newName = JOptionPane.showInputDialog(frame, "Enter a new name:", null);
-        if (newName != null && !newName.isEmpty()) renameCurrentObject(newName);
-      }
-    } else if (e.getActionCommand().equals("Delete")) { // delete file/directory and all associated files
-      if (fileSelected > -1) {
-        //updateUsedNames();
-        int delete = JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete " + currentDirObjects.get(fileSelected).getName() + "?");
-        //System.out.println(delete);
-        if (delete == 0) deleteCurrentObject();
-      }
-      // go back to previous directory
-    } else if (e.getActionCommand().equals("Go Back")) {
-      if (!currentDirectory.equals("~/" + homeDirName)) {
-        directoryPath.remove(directoryPath.size() - 1);
-        currentDirectory = directoryPath.get(directoryPath.size() - 1);
-      }
-      if (currentDirectory.equals("~/" + homeDirName)) changeDirButton.setVisible(false);
-      //updateUsedNames();
-      fileSelected = -1;
-      clickCount = -1;
+    String command = e.getActionCommand();
+    switch (command) {
+      case "New File":
+        createNewObject("file");
+        break;
+      case "New Folder":
+        createNewObject("folder");
+        break;
+      case "Rename":
+        renameSelectedObject();
+        break;
+      case "Delete":
+        deleteSelectedObject();
+        break;
+      case "Go Back":
+        goBack();
+        break;
     }
+  }
+
+  private void createNewObject(String type) {
+    if (currentDirObjects.size() >= UIConstants.MAX_OBJECTS_PER_DIRECTORY) {
+      JOptionPane.showMessageDialog(frame, "Error: Maximum number of objects per directory has been reached.");
+      return;
+    }
+    String prompt = type.equals("file") ? "Enter a file name:" : "Enter a folder name:";
+    String name = JOptionPane.showInputDialog(frame, prompt, null);
+    if (name == null)
+      return;
+    if (name.isEmpty())
+      name = "tmp";
+
+    if (!isNameValid(name)) {
+      return;
+    }
+
+    if (type.equals("file") && name.lastIndexOf('.') != name.indexOf('.')) {
+      JOptionPane.showMessageDialog(frame,
+          "Error: Multiple '.' detected in '" + name + "'\nOnly include one for the file extension.");
+      return;
+    }
+
+    if (checkNameUsed(name)) {
+      name = updateName(name);
+    }
+
+    FSObject newObject = new FSObject(name, type, currentDirectory);
+    try {
+      fileService.createFile(newObject);
+      fsObjects.add(newObject);
+      fileSelected = -1;
+    } catch (IOException ex) {
+      JOptionPane.showMessageDialog(frame, "Error creating file: " + ex.getMessage(), "File System Error",
+          JOptionPane.ERROR_MESSAGE);
+    }
+    repaint();
+  }
+
+  private void renameSelectedObject() {
+    if (fileSelected > -1) {
+      String newName = JOptionPane.showInputDialog(frame, "Enter a new name:", null);
+      if (newName != null && !newName.isEmpty()) {
+        if (isNameValid(newName)) {
+          renameCurrentObject(newName);
+        }
+      }
+    }
+  }
+
+  private boolean isNameValid(String name) {
+    String illegalChars = "/\\:*?\"<>|";
+    for (char c : illegalChars.toCharArray()) {
+      if (name.indexOf(c) >= 0) {
+        JOptionPane.showMessageDialog(frame,
+            "Error: A file name can't contain any of the following characters:\n" + illegalChars);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private void deleteSelectedObject() {
+    if (fileSelected > -1) {
+      int confirm = JOptionPane.showConfirmDialog(frame,
+          "Are you sure you want to delete " + currentDirObjects.get(fileSelected).getName() + "?");
+      if (confirm == 0) {
+        deleteCurrentObject();
+      }
+    }
+  }
+
+  private void goBack() {
+    if (!currentDirectory.equals("~/" + HOME_DIR_NAME)) {
+      directoryPath.remove(directoryPath.size() - 1);
+      currentDirectory = directoryPath.get(directoryPath.size() - 1);
+    }
+    if (currentDirectory.equals("~/" + HOME_DIR_NAME)) {
+      changeDirButton.setVisible(false);
+    }
+    fileSelected = -1;
+    repaint();
   }
 
   private void deleteCurrentObject() {
-    // get current object information
     FSObject currentOBJ = currentDirObjects.get(fileSelected);
-    // tell the object to delete host file associated with it
-    // if this is a directory that includes everything in it
-    currentOBJ.deleteFile();
-    if (currentOBJ.getType().equals("file")) { // check if we are deleting a file
-      // remove file data from arrays
-      usedNames.remove(currentOBJ.getName());
-      FSObjects.remove(currentOBJ);
-      currentDirObjects.remove(fileSelected);
-    } else if (currentOBJ.getType().equals("folder")) { // check if we are deleting a folder/directory
-      String path = currentOBJ.getFullPath(); // get full path of directory
-      //System.out.println(path);
-      // purge details from arrays
-      usedNames.remove(currentOBJ.getName());
-      FSObjects.remove(currentOBJ);
-      currentDirObjects.remove(fileSelected);
-      // get then remove all subdirectories and files
-      for (int i = 0; i < FSObjects.size(); i++) {
-        FSObject tmpOBJ = FSObjects.get(i);
-        String tmpOBJPath = tmpOBJ.getFullPath();
-        //System.out.println(tmpOBJ.getFullPath() + "\n\n");
-        if (tmpOBJPath.contains(path)) {
-          if (!tmpOBJ.getParentDirectory().equals(currentDirectory)) {
-            usedNames.remove(tmpOBJ.getName());
-            FSObjects.remove(tmpOBJ);
-            currentDirObjects.remove(tmpOBJ);
-            i = 0;
-          }
-        }
-      }
+    try {
+      fileService.deleteFile(currentOBJ);
+    } catch (IOException ex) {
+      JOptionPane.showMessageDialog(frame, "Error deleting file: " + ex.getMessage(), "File System Error",
+          JOptionPane.ERROR_MESSAGE);
+      return;
     }
-    /*
-    System.out.println("currentDirObjects length: " + currentDirObjects.size());
-    System.out.println("FSObjects length: " + FSObjects.size());
-    System.out.println("usedNames length: " + usedNames.size());
-    */
-    // file is no longer selected, hide file manipulators (delete, rename)
+
+    if (currentOBJ.getType().equals("folder")) {
+      String path = currentOBJ.getFullPath();
+      fsObjects.removeIf(fsObj -> fsObj.getFullPath().equals(path) || fsObj.getFullPath().startsWith(path + "/"));
+    } else {
+      fsObjects.remove(currentOBJ);
+    }
+
+    usedNames.remove(currentOBJ.getName());
+    currentDirObjects.remove(fileSelected);
+
     fileSelected = -1;
-    //updateUsedNames();
     hideOBJManipulators();
+    repaint();
   }
 
   private void renameCurrentObject(String newName) {
-    // get current object
     FSObject currentOBJ = currentDirObjects.get(fileSelected);
-    // store a copy of the old object and name
-    FSObject oldCurrentOBJ = currentDirObjects.get(fileSelected);
     String oldName = currentOBJ.getName();
-    // check if we are deleting a file
-    if (currentOBJ.getType().equals("file")) {
-      // purge name
-      usedNames.remove(currentOBJ.getName());
-      // check if name is used and update accordingly
-      if (checkNameUsed(newName)) newName = updateName(newName);
-      // tell the object to update its name, host file name
-      currentOBJ.setName(newName);
-    } else if (currentOBJ.getType().equals("folder")) {// check if we are updating a directory
-      String oldPath = currentOBJ.getFullPath();
-      //System.out.println(oldPath);
-      usedNames.remove(currentOBJ.getName()); // remove name from used
-      // check if new name is used and update accordingly
-      if (checkNameUsed(newName)) newName = updateName(newName);
-      currentOBJ.setName(newName);
-      //System.out.println(currentOBJ.getFolderID());
-      // get current path of directory
-      String currentOBJFID = currentOBJ.getFullPath();
 
-      // go through all the objects and update only the child objects
-      for (FSObject tmpOBJ : FSObjects) {
-        String tmpFID = tmpOBJ.getFullPath();
-        String tmpParentDir = tmpOBJ.getParentDirectory();
-        if (oldPath.equals(tmpParentDir) && !newName.equals(oldName)) {
-          tmpOBJ.setParentDirectory(currentOBJFID);
-          tmpOBJ.setFullPath(currentOBJ.getFullPath());
-        } else if (tmpFID.contains(oldPath) && !newName.equals(oldName)) {
-          if (!tmpOBJ.getParentDirectory().equals(currentDirectory)) {
-            //System.out.println(oldPath);
-            int offset = newName.length() - oldName.length();
-            if (offset > tmpParentDir.length()) offset = currentOBJFID.length();
-            String newTmpOBJPath = currentOBJFID + tmpParentDir.substring(currentOBJFID.length() - offset);
-            //System.out.println(newTmpOBJPath);
-            tmpOBJ.setFullPath(newTmpOBJPath);
-            tmpOBJ.setParentDirectory(newTmpOBJPath);
-          }
+    if (checkNameUsed(newName)) {
+      newName = updateName(newName);
+    }
+
+    try {
+      fileService.renameFile(currentOBJ, newName); // This also updates the name in the FSObject
+    } catch (IOException ex) {
+      JOptionPane.showMessageDialog(frame, "Error renaming file: " + ex.getMessage(), "File System Error",
+          JOptionPane.ERROR_MESSAGE);
+      return; // Stop execution if rename fails
+    }
+
+    if (currentOBJ.getType().equals("folder")) {
+      String oldPath = currentOBJ.getFullPath().replace(newName, oldName);
+      String newPath = currentOBJ.getFullPath();
+
+      for (FSObject tmpOBJ : fsObjects) {
+        if (tmpOBJ.getParentDirectory().startsWith(oldPath)) {
+          String newParentPath = tmpOBJ.getParentDirectory().replaceFirst(java.util.regex.Pattern.quote(oldPath),
+              newPath);
+          tmpOBJ.setParentDirectory(newParentPath);
         }
-        tmpOBJ.setName(tmpOBJ.getName());
       }
     }
-    // rename directory
+
+    usedNames.remove(oldName);
     usedNames.add(newName);
-    //updateUsedNames();
-    // unselect file
     fileSelected = -1;
     hideOBJManipulators();
+    repaint();
   }
 
-  // hide rename and delete buttons
   private void hideOBJManipulators() {
     renameButton.setVisible(false);
     deleteButton.setVisible(false);
   }
 
   private String updateName(String fileName) {
-    // check if name is used and add a number to it until it isn't
-    String[] nameParts = fileName.split("\\.");
-    if (nameParts.length > 1) {
-      String updatedName;
-      int counter = 1;
-      do {
-        updatedName = nameParts[0] + counter + "." + nameParts[1];
-        counter++;
-      } while (checkNameUsed(updatedName));
-      return updatedName;
+    String baseName;
+    String extension = "";
+
+    if (fileName.contains(".")) {
+      baseName = fileName.substring(0, fileName.lastIndexOf('.'));
+      extension = fileName.substring(fileName.lastIndexOf('.'));
     } else {
-      String updatedName;
-      int counter = 1;
-      do {
-        updatedName = fileName + counter;
-        counter++;
-      } while (checkNameUsed(updatedName));
-      return updatedName;
+      baseName = fileName;
     }
+
+    int counter = 1;
+    String updatedName;
+    do {
+      updatedName = baseName + counter + extension;
+      counter++;
+    } while (checkNameUsed(updatedName));
+    return updatedName;
   }
 
-  // check if name is used
   private boolean checkNameUsed(String name) {
     return usedNames.contains(name);
   }
 
-  // mouse listener for detecting clicks
-  private class fileListener implements MouseListener {
-
+  private class FileListener implements MouseListener {
     @Override
     public void mouseClicked(MouseEvent e) {
-      // not used, don't remove
+      int xCord = e.getX();
+      int yCord = e.getY();
+
+      for (int i = 0; i < currentDirObjects.size(); i++) {
+        if (isClickOnObject(i, xCord, yCord)) {
+          fileSelected = i;
+          if (e.getClickCount() == 2) {
+            handleDoubleClick(i);
+          } else {
+            renameButton.setVisible(true);
+            deleteButton.setVisible(true);
+          }
+          repaint();
+          return;
+        }
+      }
+
+      // If no object was clicked, deselect
+      fileSelected = -1;
+      hideOBJManipulators();
+      repaint();
+    }
+
+    private boolean isClickOnObject(int i, int x, int y) {
+      ImageIcon imageIcon = currentDirObjects.get(i).getImageIcon();
+      int imageWidth = imageIcon.getIconWidth();
+      int imageHeight = imageIcon.getIconHeight();
+
+      int row = i / UIConstants.MAX_ICONS_PER_ROW;
+      int col = i % UIConstants.MAX_ICONS_PER_ROW;
+
+      int xMin = UIConstants.FILE_ICON_START_X + col * UIConstants.FILE_ICON_SPACING_X * imageWidth
+          - UIConstants.CLICK_X_MIN_OFFSET;
+      int xMax = xMin + imageWidth + UIConstants.CLICK_X_MAX_OFFSET;
+      int yMin = UIConstants.FILE_ICON_START_Y + row * UIConstants.FILE_ICON_SPACING_Y - UIConstants.CLICK_Y_MIN_OFFSET;
+      int yMax = yMin + imageHeight + UIConstants.CLICK_Y_MAX_OFFSET;
+
+      return (x >= xMin && x <= xMax && y >= yMin && y <= yMax);
+    }
+
+    private void handleDoubleClick(int i) {
+      FSObject currentOBJ = currentDirObjects.get(i);
+      if (currentOBJ.getType().equals("folder")) {
+        directoryPath.add(currentOBJ.getFullPath());
+        currentDirectory = currentOBJ.getFullPath();
+        changeDirButton.setVisible(true);
+      } else if (currentOBJ.getType().equals("file")) {
+        try {
+          fileService.editFile(currentOBJ);
+        } catch (IOException ex) {
+          JOptionPane.showMessageDialog(frame, "Error opening file: " + ex.getMessage(), "File System Error",
+              JOptionPane.ERROR_MESSAGE);
+        }
+      }
+      fileSelected = -1;
+      hideOBJManipulators();
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
-      // get coordinates of click
-      int xCord = e.getX();
-      int yCord = e.getY();
-      // go through all the objects in the directory and check if one was clicked
-      for (int i = 0; i < currentDirObjects.size(); i++) {
-        // get icon size for determining if it was clicked
-        ImageIcon imageIcon = currentDirObjects.get(i).getImageIcon();
-        int imageWidth = imageIcon.getIconWidth();
-        int imageHeight = imageIcon.getIconWidth() + 12;
-
-        // adjust i if we reach the end of the row
-        int iAdj = i;
-        if (i >= 9) iAdj = i - 9 * (i / 9);
-
-        // calculate coordinates for where we accept a click for the object
-        int xMin = 49 + iAdj * 2 * imageWidth;
-        int xMax = 80 + iAdj * 2 * imageWidth;
-
-        int yMin = 100 + ((imageHeight + 40) * (int) (i / 9.0));
-        int yMax = 150 + ((imageHeight + 40) * (int) (i / 9.0));
-        if (xCord >= xMin && xCord <= xMax && yCord >= yMin && yCord <= yMax) {
-          renameButton.setVisible(true);
-          deleteButton.setVisible(true);
-          // check if we double-click the object
-          if (fileSelected == i) clickCount++;
-          boolean dirty = false;
-          if (clickCount % 2 == 0) {
-            // reset double click
-            clickCount = -2;
-            //System.out.println("Double Click Detected");
-            // check if we clicked a file/folder or elsewhere
-            FSObject currentOBJ;
-            if (fileSelected != -1) {
-              // get object we clicked on
-              currentOBJ = currentDirObjects.get(fileSelected);
-              // if it was a directory we switch to that directory
-              if (currentOBJ.getType().equals("folder")) {
-                directoryPath.add(currentDirObjects.get(fileSelected).getFullPath());
-                currentDirectory = directoryPath.get(directoryPath.size() - 1);
-                changeDirButton.setVisible(true);
-              } else if (currentOBJ.getType().equals("file")) {
-                // if it's a file call host device to edit it
-                currentOBJ.editFile();
-              }
-              //updateUsedNames();
-              // unselect file after double click
-              hideOBJManipulators();
-              clickCount = -1;
-              dirty = true;
-            }
-          }
-          if (!dirty) fileSelected = i;
-          else fileSelected = -1;
-          //System.out.println("File " + fileSelected);
-          return;
-        }
-      }
-      // unselect file
-      fileSelected = -1;
-      clickCount = -1;
-      hideOBJManipulators();
-      //System.out.println("X Cord: " + xCord + ", Y Cord: " + yCord);
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-      // not used, don't remove
     }
 
     @Override
     public void mouseEntered(MouseEvent e) {
-      // not used, don't remove
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
-      // not used, don't remove
     }
   }
-
 }
